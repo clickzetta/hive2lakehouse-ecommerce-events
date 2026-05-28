@@ -99,9 +99,25 @@ cp .env.sample .env
 # 编辑 .env 填写连接信息
 
 cd 03_lakehouse
-python setup.py
-python e2e.py
+python setup.py        # 建 Schema、Volume、表，上传 sample 数据
+python e2e.py          # 端到端验证（10/10）
+
+# 重跑（清空表，保留 Schema/Volume）
+python reset.py
+python e2e.py --skip-upload
+
+# 完整清理（删除所有 Schema 和 Volume）
+python teardown.py
 ```
+
+### 脚本说明
+
+| 脚本 | 作用 |
+|------|------|
+| `setup.py` | 建 Schema、Volume、表，上传数据（`--full` 上传完整数据集，`--skip-upload` 只建表） |
+| `e2e.py` | 端到端全流程：COPY INTO → ODS → DWD → DWS/ADS → 断言检查 |
+| `reset.py` | 清空所有表（保留 Schema/Volume，可直接重跑 e2e.py） |
+| `teardown.py` | 完整清理：删除所有 Schema 和 Volume（支持 `--dry-run` 预览） |
 
 ---
 
