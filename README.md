@@ -2,9 +2,7 @@
 
 > Hive → ClickZetta Lakehouse 迁移示例，以电商用户行为日志分析为载体。
 
-本项目展示如何将典型的 Hive 数仓迁移到 ClickZetta Lakehouse，覆盖 Hive 迁移中最常见的难点：RegexSerDe 解析、分区表、分桶表、UDF 替换。
-
-数据来源：[Kaggle E-Commerce Events](https://www.kaggle.com/datasets/mkechinov/ecommerce-events-history-in-cosmetics-shop)（电商网站用户行为日志，含 view/cart/purchase 事件，2019 年 10–11 月）。
+本项目 fork 自 [Kaggle E-Commerce Events](https://www.kaggle.com/datasets/mkechinov/ecommerce-events-history-in-cosmetics-shop) 数据集，在 Hive 4.0 Docker 环境中实现了完整的 ODS → DWD → DWS → ADS 四层数仓，并迁移到 ClickZetta Lakehouse，完成了端到端验证（**10/10 验证项全部通过**）。
 
 ---
 
