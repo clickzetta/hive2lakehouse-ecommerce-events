@@ -11,7 +11,7 @@
 | 普通表 | `CREATE TABLE t (...) STORED AS ORC` | `CREATE TABLE t (...)` |
 | 分区表 | `CREATE TABLE t (...) PARTITIONED BY (dt STRING) STORED AS ORC` | `CREATE TABLE t (...) PARTITIONED BY (dt STRING)` |
 | 外部表 | `CREATE EXTERNAL TABLE t (...) LOCATION '/path'` | 不需要，用 COPY INTO 从 Volume 加载 |
-| 分桶表 | `CLUSTERED BY (col) INTO N BUCKETS` | 不支持，改用 `CREATE INDEX ... USING ZORDER (col)` |
+| 分桶表 | `CLUSTERED BY (col) INTO N BUCKETS` | 语法相同，直接兼容 |
 | ORC 压缩 | `TBLPROPERTIES ("orc.compress"="SNAPPY")` | 删除，Lakehouse 自动压缩 |
 | 跳过 header | `TBLPROPERTIES ("skip.header.line.count"="1")` | COPY INTO 时用 `OPTIONS ('header'='true')` |
 
@@ -150,7 +150,7 @@ WHERE user_id > 100000
 SET hive.input.format=org.apache.hadoop.hive.ql.io.HiveInputFormat;
 ```
 
-**Lakehouse 影响**：无此问题。Lakehouse 不支持分桶，迁移后自然消失。这也是迁移到 Lakehouse 的一个收益。
+**Lakehouse 影响**：无此问题。Lakehouse 同样支持 `CLUSTERED BY ... INTO N BUCKETS` 分桶，但不存在这个 bug，GROUP BY 正常工作。
 
 ### 陷阱 3：COPY INTO 不支持列引用语法
 
@@ -168,4 +168,4 @@ COPY INTO t FROM (SELECT $1, $2 FROM VOLUME ...)
 |------|------|-----------|
 | 动态分区开关 | 默认关闭，需 `SET hive.exec.dynamic.partition=true` | 默认开启 |
 | 严格模式 | 默认严格（至少一个静态分区），需 `SET ... mode=nonstrict` | 无此限制 |
-| 分桶写入 | 需 `SET hive.enforce.bucketing=true` | 不支持分桶 |
+| 分桶写入 | 需 `SET hive.enforce.bucketing=true` | 默认支持，无需 SET |

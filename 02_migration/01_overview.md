@@ -4,18 +4,18 @@
 
 ## 整体结论
 
-**迁移工作量中等，主要改动集中在存储格式声明和数据加载方式。** DML 逻辑（SELECT / JOIN / GROUP BY / 窗口函数）与 Hive 高度兼容，几乎不需要修改。改动集中在 5 个已知差异点。
+**迁移工作量中等，主要改动集中在存储格式声明和数据加载方式。** DML 逻辑（SELECT / JOIN / GROUP BY / 窗口函数）与 Hive 高度兼容，几乎不需要修改。改动集中在 4 个已知差异点。
 
 ## 迁移前后对比
 
 | 层 | Hive 实现 | Lakehouse 实现 |
 |----|-----------|---------------|
 | ODS | EXTERNAL TABLE + OpenCSVSerde + TEXTFILE staging | 普通表 + COPY INTO FROM VOLUME |
-| DWD | CLUSTERED BY 分桶 + ORC + 动态分区（需 SET） | 普通分区表（无分桶，可加 Z-Order 索引） |
+| DWD | CLUSTERED BY 分桶 + ORC + 动态分区（需 SET） | CLUSTERED BY 分桶 + 动态分区（默认开启，无需 SET） |
 | DWS | ORC 分区表 | 分区表（无需声明格式） |
 | ADS | ORC 分区表 | 分区表（无需声明格式） |
 
-## 5 个必须修改的地方
+## 4 个必须修改的地方
 
 ### 1. 存储格式声明
 
@@ -47,23 +47,7 @@ USING CSV OPTIONS ('header'='true') FILES ('file.csv') ON_ERROR=CONTINUE;
 INSERT INTO ods_raw PARTITION (dt) SELECT ..., SUBSTR(event_time,1,10) FROM staging;
 ```
 
-### 3. 分桶表替换
-
-Hive 分桶表在 Lakehouse 中没有对应概念，改用 Z-Order 索引加速同等查询。
-
-```sql
--- Hive
-SET hive.enforce.bucketing=true;
-CREATE TABLE dwd (...)
-CLUSTERED BY (user_id) INTO 8 BUCKETS
-STORED AS ORC;
-
--- Lakehouse：去掉分桶，建表后加 Z-Order 索引
-CREATE TABLE dwd (...) PARTITIONED BY (dt STRING);
-CREATE INDEX dwd_zorder ON dwd USING ZORDER (user_id);
-```
-
-### 4. 动态分区 SET 语句
+### 3. 动态分区 SET 语句
 
 Hive 动态分区需要显式开启，Lakehouse 默认支持，删除所有相关 SET 语句。
 
@@ -76,7 +60,7 @@ SET hive.enforce.bucketing=true;
 -- Lakehouse：直接删除，无需任何 SET
 ```
 
-### 5. SerDe 配置
+### 4. SerDe 配置
 
 Hive 解析 CSV 需要配置 SerDe，Lakehouse 在 COPY INTO 的 OPTIONS 里指定，更简洁。
 
